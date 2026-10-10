@@ -8,25 +8,38 @@
 input=$(cat)
 
 # One jq call, unit-separator delimited so empty fields keep their place
-IFS=$'\x1f' read -r model effort pct size cwd five_h <<EOF
+IFS=$'\x1f' read -r model effort pct size cwd five_h five_reset seven_d <<EOF
 $(printf '%s' "$input" | jq -r '[
   (.model.display_name // "Claude"),
   (.effort.level // ""),
   (.context_window.used_percentage // "" | tostring),
   (.context_window.context_window_size // "" | tostring),
   (.workspace.current_dir // .cwd // ""),
-  (.rate_limits.five_hour.used_percentage // "" | tostring)
+  (.rate_limits.five_hour.used_percentage // "" | tostring),
+  (.rate_limits.five_hour.resets_at // "" | tostring),
+  (.rate_limits.seven_day.used_percentage // "" | tostring)
 ] | join("\u001f")' 2>/dev/null)
 EOF
 
-# Palette, same as the Terminal profile and Starship prompt
+# Palette, same as the Terminal profile and Starship prompt.
+# Switches to the Day palette when the Jarvis HUD Day theme is active.
 e=$'\e'
-cyan="$e[38;2;0;216;255m"
-text="$e[38;2;212;243;255m"
-dim="$e[38;2;47;85;102m"
-muted="$e[38;2;111;147;165m"
-gold="$e[38;2;255;215;95m"
-red="$e[38;2;255;77;94m"
+theme=$(jq -r '.theme // empty' "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json" 2>/dev/null)
+if [ "$theme" = "custom:jarvis-hud-day" ]; then
+  cyan="$e[38;2;0;134;179m"
+  text="$e[38;2;11;39;51m"
+  dim="$e[38;2;159;188;203m"
+  muted="$e[38;2;85;122;140m"
+  gold="$e[38;2;166;107;0m"
+  red="$e[38;2;214;40;57m"
+else
+  cyan="$e[38;2;0;216;255m"
+  text="$e[38;2;212;243;255m"
+  dim="$e[38;2;47;85;102m"
+  muted="$e[38;2;111;147;165m"
+  gold="$e[38;2;255;215;95m"
+  red="$e[38;2;255;77;94m"
+fi
 bold="$e[1m"
 r="$e[0m"
 
@@ -92,10 +105,22 @@ if [ -n "$cwd" ]; then
   out="${out}${sep}${bold}${text}${d}${r}"
 fi
 
-# 5h 23%, only when Claude Code reports it
+# 5h 23% ↻1h12m ┊ 7d 41%, only what Claude Code reports
 if [ -n "$five_h" ]; then
   f=${five_h%.*}; [ -z "$f" ] && f=0
   out="${out}${sep}${muted}5h${r} $(level_color "$f")${f}%${r}"
+  if [ -n "$five_reset" ]; then
+    left=$(( ${five_reset%.*} - $(date +%s) ))
+    if [ "$left" -gt 0 ]; then
+      h=$(( left / 3600 )); m=$(( left % 3600 / 60 ))
+      if [ "$h" -gt 0 ]; then t="${h}h$(printf '%02d' "$m")m"; else t="${m}m"; fi
+      out="${out} ${dim}↻${r}${muted}${t}${r}"
+    fi
+  fi
+fi
+if [ -n "$seven_d" ]; then
+  s=${seven_d%.*}; [ -z "$s" ] && s=0
+  out="${out}${sep}${muted}7d${r} $(level_color "$s")${s}%${r}"
 fi
 
 printf '%s' "$out"

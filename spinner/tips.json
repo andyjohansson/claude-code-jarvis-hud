@@ -1,0 +1,27 @@
+{
+  "tips": [
+    { "id": "jarvis.modes", "text": "Shift+Tab cycles your permission modes, sir. Plan mode first is often wise." },
+    { "id": "jarvis.interrupt", "text": "Press Esc to interrupt me mid-task. I won't take it personally." },
+    { "id": "jarvis.rewind", "text": "With an empty prompt, press Esc twice to rewind to an earlier point." },
+    { "id": "jarvis.compact", "text": "Running low on context? /compact condenses our history and keeps the essentials." },
+    { "id": "jarvis.context", "text": "/context shows exactly what is filling my memory banks." },
+    { "id": "jarvis.clear", "text": "New mission? /clear gives us a clean slate." },
+    { "id": "jarvis.resume", "text": "/resume brings back an earlier session. claude --continue picks up the last one." },
+    { "id": "jarvis.mention", "text": "Type @ followed by a file name to put that file in front of me directly." },
+    { "id": "jarvis.shell", "text": "Start a line with ! to run a shell command yourself. I will see the output." },
+    { "id": "jarvis.newline", "text": "Ctrl+J adds a new line without sending the message." },
+    { "id": "jarvis.model", "text": "/model switches my processing core. Option+P works too, with Option as Meta." },
+    { "id": "jarvis.ultrathink", "text": "Say ultrathink in your prompt when a problem deserves my deepest analysis." },
+    { "id": "jarvis.usage", "text": "/usage shows how much of your plan's limits we have spent." },
+    { "id": "jarvis.memory", "text": "/memory opens my standing orders in CLAUDE.md." },
+    { "id": "jarvis.init", "text": "New project? /init has me survey the codebase and write a CLAUDE.md briefing." },
+    { "id": "jarvis.permissions", "text": "/permissions lets you pre-approve commands you trust, so I stop asking." },
+    { "id": "jarvis.hooks", "text": "/hooks sets up protocols that run automatically before or after my actions." },
+    { "id": "jarvis.agents", "text": "/agents assembles a team of specialist subagents. Every hero needs backup." },
+    { "id": "jarvis.mcp", "text": "/mcp shows the outside systems I am connected to." },
+    { "id": "jarvis.rename", "text": "/rename gives this session a name, so you can find it later." },
+    { "id": "jarvis.fullscreen", "text": "Flickering display? /tui fullscreen switches to a steadier renderer." },
+    { "id": "jarvis.theme", "text": "/theme switches between Jarvis HUD and Jarvis HUD Day." },
+    { "id": "jarvis.config", "text": "/config holds the rest of my settings. Adjust at will, sir." }
+  ]
+}

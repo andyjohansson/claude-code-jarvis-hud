@@ -3,7 +3,8 @@
 #  JARVIS HUD  ·  installer for Claude Code
 #  Safe to run more than once. Backs up settings.json before changing it.
 #
-#    ./install.sh                     install theme, status line, spinner verbs
+#    ./install.sh                     themes, status line, spinner verbs and tips
+#    ./install.sh --auto-theme        also follow macOS dark and light mode
 #    ./install.sh --force-statusline  replace an existing status line too
 #    ./install.sh --uninstall         remove everything this installed
 # ======================================================================
@@ -15,8 +16,13 @@ SETTINGS="$CLAUDE_DIR/settings.json"
 THEMES_DIR="$CLAUDE_DIR/themes"
 HUD_DIR="$CLAUDE_DIR/jarvis-hud"
 STATUSLINE="$HUD_DIR/statusline.sh"
+TIPS="$HUD_DIR/tips.json"
+SYNC="$HUD_DIR/appearance-sync.sh"
 PREVIOUS_SL="$HUD_DIR/previous-statusline.json"
-THEME_ID="custom:jarvis-hud"
+NIGHT="custom:jarvis-hud"
+DAY="custom:jarvis-hud-day"
+AGENT_LABEL="com.github.andyjohansson.claude-code-jarvis-hud.appearance"
+AGENT_PLIST="$HOME/Library/LaunchAgents/$AGENT_LABEL.plist"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 
 cyan=$'\e[38;2;0;216;255m'; gold=$'\e[38;2;255;215;95m'; red=$'\e[38;2;255;77;94m'; r=$'\e[0m'
@@ -25,17 +31,22 @@ warn() { printf '%s\n' "${gold}!${r} $*"; }
 die()  { printf '%s\n' "${red}✕${r} $*" >&2; exit 1; }
 
 force_statusline=0
+auto_theme=0
 uninstall=0
 for arg in "$@"; do
   case "$arg" in
     --force-statusline) force_statusline=1 ;;
+    --auto-theme)       auto_theme=1 ;;
     --uninstall)        uninstall=1 ;;
-    -h|--help)          sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help)          sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *)                  die "Unknown option: $arg (try --help)" ;;
   esac
 done
 
 command -v jq >/dev/null || die "jq is required. Install it with: brew install jq (macOS) or your package manager."
+if [ "$auto_theme" -eq 1 ] && [ "$(uname)" != "Darwin" ]; then
+  die "--auto-theme follows macOS dark and light mode, so it only works on macOS."
+fi
 
 mkdir -p "$CLAUDE_DIR"
 backed_up=0
@@ -67,47 +78,71 @@ edit_settings() {
   return 1
 }
 
+remove_agent() {
+  if [ -f "$AGENT_PLIST" ]; then
+    launchctl bootout "gui/$(id -u)" "$AGENT_PLIST" 2>/dev/null || true
+    rm -f "$AGENT_PLIST"
+    say "Stopped following macOS dark and light mode"
+  fi
+}
+
 # ---------------------------------------------------------------- uninstall
 if [ "$uninstall" -eq 1 ]; then
   # Status line that --force-statusline replaced, put back on uninstall
   previous='null'
   [ -f "$PREVIOUS_SL" ] && previous="$(cat "$PREVIOUS_SL")"
-  edit_settings --arg theme "$THEME_ID" --arg sl "$STATUSLINE" --argjson prev "$previous" '
-    (if .theme == $theme then del(.theme) else . end)
+  edit_settings --arg night "$NIGHT" --arg day "$DAY" --arg sl "$STATUSLINE" \
+    --arg tips "$TIPS" --argjson prev "$previous" '
+    (if .theme == $night or .theme == $day then del(.theme) else . end)
     | (if .statusLine.command? == ("bash \"" + $sl + "\"")
         then (if $prev == null then del(.statusLine) else .statusLine = $prev end)
         else . end)
     | (if (.spinnerVerbs.verbs? // []) | index("Calibrating repulsors") then del(.spinnerVerbs) else . end)
+    | (if .spinnerTipsOverride.tipsFile? == $tips then del(.spinnerTipsOverride) else . end)
   ' && say "Removed Jarvis HUD keys from settings.json" || say "settings.json had no Jarvis HUD keys"
   [ "$previous" != 'null' ] && say "Restored your previous status line"
-  rm -f "$THEMES_DIR/jarvis-hud.json"
+  [ "$(uname)" = "Darwin" ] && remove_agent
+  rm -f "$THEMES_DIR/jarvis-hud.json" "$THEMES_DIR/jarvis-hud-day.json"
   rm -rf "$HUD_DIR"
-  say "Removed theme and status line files"
+  say "Removed themes, status line and tips"
   say "Done. Restart Claude Code to see the change."
   exit 0
 fi
 
 # ---------------------------------------------------------------- install
 
-# 1. Theme
+# 1. Themes
 themes_dir_existed=1
 [ -d "$THEMES_DIR" ] || themes_dir_existed=0
 mkdir -p "$THEMES_DIR"
-cp "$REPO/themes/jarvis-hud.json" "$THEMES_DIR/jarvis-hud.json"
-say "Installed theme to ${THEMES_DIR/#$HOME/~}/jarvis-hud.json"
+cp "$REPO/themes/jarvis-hud.json" "$REPO/themes/jarvis-hud-day.json" "$THEMES_DIR/"
+say "Installed Jarvis HUD and Jarvis HUD Day themes to ${THEMES_DIR/#$HOME/~}"
 
-# 2. Status line script
+# 2. Status line script and tips
 mkdir -p "$HUD_DIR"
 cp "$REPO/statusline/statusline.sh" "$STATUSLINE"
 chmod +x "$STATUSLINE"
-say "Installed status line to ${STATUSLINE/#$HOME/~}"
+cp "$REPO/spinner/tips.json" "$TIPS"
+say "Installed status line and tips to ${HUD_DIR/#$HOME/~}"
 
-# 3. settings.json: theme and spinner verbs
-edit_settings --arg theme "$THEME_ID" --slurpfile verbs "$REPO/spinner/verbs.json" \
-  '.theme = $theme | .spinnerVerbs = $verbs[0]' || true
-say "Set theme to Jarvis HUD and added spinner verbs"
+# 3. settings.json: theme (keeps Day if you already use it) and spinner verbs
+edit_settings --arg night "$NIGHT" --arg day "$DAY" --slurpfile verbs "$REPO/spinner/verbs.json" '
+  (if .theme == $day then . else .theme = $night end)
+  | .spinnerVerbs = $verbs[0]
+' || true
+say "Set the Jarvis HUD theme and spinner verbs"
 
-# 4. settings.json: status line, without overwriting someone else's
+# 4. settings.json: tips, without overwriting someone else's
+current_tips="$(jq -r '.spinnerTipsOverride // empty | tostring' "$SETTINGS")"
+if [ -n "$current_tips" ] && [ "$(jq -r '.spinnerTipsOverride.tipsFile? // empty' "$SETTINGS")" != "$TIPS" ]; then
+  warn "You already have custom spinner tips, so they were left alone."
+else
+  edit_settings --arg tips "$TIPS" '.spinnerTipsOverride = {label: "J.A.R.V.I.S.", tipsFile: $tips}' || true
+  say "Added J.A.R.V.I.S. tips under the spinner"
+fi
+
+# 5. settings.json: status line, without overwriting someone else's.
+#    Refreshes every 30 s so the reset countdown stays current while idle.
 sl_cmd="bash \"$STATUSLINE\""
 current="$(jq -r '.statusLine.command? // empty' "$SETTINGS")"
 if [ -n "$current" ] && [ "$current" != "$sl_cmd" ] && [ "$force_statusline" -eq 0 ]; then
@@ -119,8 +154,39 @@ else
   if [ -n "$current" ] && [ "$current" != "$sl_cmd" ]; then
     jq '.statusLine' "$SETTINGS" > "$PREVIOUS_SL"
   fi
-  edit_settings --arg cmd "$sl_cmd" '.statusLine = {type: "command", command: $cmd}' || true
+  edit_settings --arg cmd "$sl_cmd" '.statusLine = {type: "command", command: $cmd, refreshInterval: 30}' || true
   say "Set the Jarvis HUD status line"
+fi
+
+# 6. Optional: follow macOS dark and light mode
+if [ "$auto_theme" -eq 1 ]; then
+  cp "$REPO/appearance/appearance-sync.sh" "$SYNC"
+  chmod +x "$SYNC"
+  mkdir -p "$(dirname "$AGENT_PLIST")"
+  cat > "$AGENT_PLIST" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>$AGENT_LABEL</string>
+  <key>ProgramArguments</key>
+  <array><string>/bin/bash</string><string>$SYNC</string></array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>CLAUDE_CONFIG_DIR</key><string>$CLAUDE_DIR</string>
+    <key>PATH</key><string>/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:/usr/local/bin</string>
+  </dict>
+  <key>WatchPaths</key>
+  <array><string>$HOME/Library/Preferences/.GlobalPreferences.plist</string></array>
+  <key>StartInterval</key><integer>60</integer>
+  <key>RunAtLoad</key><true/>
+</dict>
+</plist>
+EOF
+  launchctl bootout "gui/$(id -u)" "$AGENT_PLIST" 2>/dev/null || true
+  launchctl bootstrap "gui/$(id -u)" "$AGENT_PLIST"
+  bash "$SYNC"
+  say "Following macOS dark and light mode (Jarvis HUD at night, Jarvis HUD Day by day)"
 fi
 
 if [ "$themes_dir_existed" -eq 0 ]; then

@@ -1,6 +1,6 @@
 # Claude Code Jarvis HUD
 
-A sci-fi HUD look for **Claude Code**, inspired by the holographic interfaces in the Iron Man and Avengers films. Arc-reactor cyan on near-black, a HUD status line with a live context gauge, and J.A.R.V.I.S. lines in the spinner while Claude works.
+A sci-fi HUD look for **Claude Code**, inspired by the holographic interfaces in the Iron Man and Avengers films. Arc-reactor cyan on near-black, a HUD status line with a live context gauge, and J.A.R.V.I.S. lines and tips in the spinner while Claude works. Comes with a light Day variant that can follow macOS dark and light mode.
 
 Works in any terminal: Terminal.app, iTerm2, Ghostty, Warp, the VS Code terminal and Linux.
 
@@ -15,18 +15,20 @@ Part of a set:
 
 | Part | File | What it does |
 |---|---|---|
-| Color theme | `themes/jarvis-hud.json` | Recolors Claude Code itself: spinner, startup mascot, borders, text, diffs, plan mode, skills, subagent colors, message backgrounds |
-| Status line | `statusline/statusline.sh` | Model, effort, context gauge, git branch, folder and 5-hour usage |
-| Spinner verbs | `spinner/verbs.json` | "Calibrating repulsors", "Routing power to the arc reactor" and 62 more |
+| Color themes | `themes/jarvis-hud.json`, `themes/jarvis-hud-day.json` | Recolors Claude Code itself: spinner, startup mascot, borders, text, diffs, plan mode, skills, subagent colors, message backgrounds |
+| Status line | `statusline/statusline.sh` | Model, effort, context gauge, git branch, folder, 5-hour usage with reset countdown, and 7-day usage |
+| Spinner verbs | `spinner/verbs.json` | "Calibrating repulsors", "Building it in a cave with a box of scraps" and 70 more |
+| Spinner tips | `spinner/tips.json` | Useful Claude Code tips in J.A.R.V.I.S.'s voice, shown alongside the built-in tips |
+| Appearance sync | `appearance/appearance-sync.sh` | Optional. Switches between Jarvis HUD and Jarvis HUD Day with macOS dark and light mode |
 | Installer | `install.sh` | Sets it all up, backs up your settings, safe to run again |
 
 The status line only uses standard Unicode symbols, so no Nerd Font is needed.
 
 ```
-◆ Opus 5.5 · high ⟨▰▰▰▱▱▱▱▱▱▱⟩ 31% 310k/1M ┊ ⎇ main ● ┊ ~/Dev/my-project ┊ 5h 23%
+◆ Opus 5.5 · high ⟨▰▰▰▱▱▱▱▱▱▱⟩ 31% 310k/1M ┊ ⎇ main ● ┊ ~/Dev/my-project ┊ 5h 23% ↻1h12m ┊ 7d 41%
 ```
 
-The context gauge and the 5-hour usage turn **gold** at 50% and **red** at 80%. Parts that Claude Code doesn't report are left out.
+The context gauge and the usage limits turn **gold** at 50% and **red** at 80%. `↻` counts down to when the 5-hour limit resets. Parts that Claude Code doesn't report are left out, and the colors switch to a matching palette when the Day theme is active.
 
 ## Install
 
@@ -38,19 +40,27 @@ cd ~/Dev/claude-code-jarvis-hud
 
 The installer:
 
-1. Copies the theme to `~/.claude/themes/jarvis-hud.json`
-2. Copies the status line to `~/.claude/jarvis-hud/statusline.sh`
-3. Backs up `~/.claude/settings.json`, then sets `theme`, `spinnerVerbs` and `statusLine`. Your other settings, hooks and permissions are left as they are.
+1. Copies both themes to `~/.claude/themes/`
+2. Copies the status line and tips to `~/.claude/jarvis-hud/`
+3. Backs up `~/.claude/settings.json`, then sets `theme`, `spinnerVerbs`, `spinnerTipsOverride` and `statusLine`. Your other settings, hooks and permissions are left as they are.
 
 If `~/.claude/themes` didn't exist before, restart Claude Code once so it finds the theme. You can switch themes any time with `/theme`.
 
-If you already have a status line, it is kept. To use the Jarvis HUD one instead:
+If you already have a status line or custom spinner tips, they are kept. To use the Jarvis HUD status line instead:
 
 ```bash
 ./install.sh --force-statusline
 ```
 
 Your old status line is saved and comes back if you uninstall.
+
+### Follow macOS dark and light mode
+
+```bash
+./install.sh --auto-theme
+```
+
+Installs a small LaunchAgent that switches between **Jarvis HUD** (dark) and **Jarvis HUD Day** (light) when macOS changes appearance. It only switches between the two Jarvis themes, so if you pick another theme in `/theme`, it leaves your choice alone. Claude Code's built-in `auto` theme can't switch between custom themes yet ([#93034](https://github.com/anthropics/claude-code/issues/93034)), which is why this exists.
 
 It needs [jq](https://jqlang.org), which ships with macOS 15 and later. Otherwise run `brew install jq` or use your package manager.
 
@@ -66,24 +76,26 @@ Renders the status line for a few sample sessions (fresh, working, filling up, c
 
 | What | How |
 |---|---|
-| Switch themes | `/theme` in Claude Code. Jarvis HUD is listed among the custom themes |
+| Switch themes | `/theme` in Claude Code. Jarvis HUD and Jarvis HUD Day are listed among the custom themes |
 | Tweak colors | Edit `~/.claude/themes/jarvis-hud.json`. Claude Code reloads it live. See the [color tokens](https://code.claude.com/docs/en/terminal-config#create-a-custom-theme) |
 | Keep the built-in verbs too | Set `"mode": "append"` in `spinner/verbs.json` and run `./install.sh` again |
 | Write your own verbs | Edit the list in `spinner/verbs.json` and run `./install.sh` again |
+| Edit the tips | Edit `spinner/tips.json` and run `./install.sh` again. Claude Code reads tips when a session starts |
+| Turn tips off | `"spinnerTipsEnabled": false` in `~/.claude/settings.json` hides all tips |
 
 ## Palette
 
-| Role | Color |
-|---|---|
-| Accent, spinner | `#00D8FF` |
-| Shimmer, plan mode | `#7DEEFF` |
-| Text | `#D4F3FF` |
-| Muted | `#6F93A5` |
-| Dim, borders | `#2F5566` |
-| Success | `#3DFFB8` |
-| Warning, your label | `#FFD75F` |
-| Error | `#FF4D5E` |
-| Subagents | HUD tones of red, blue, green, yellow, purple, orange, pink and cyan |
+| Role | Jarvis HUD | Jarvis HUD Day |
+|---|---|---|
+| Accent, spinner | `#00D8FF` | `#0086B3` |
+| Shimmer, plan mode | `#7DEEFF` | `#0077A3` |
+| Text | `#D4F3FF` | `#0B2733` |
+| Muted | `#6F93A5` | `#557A8C` |
+| Dim, borders | `#2F5566` | `#9FBCCB` |
+| Success | `#3DFFB8` | `#00875A` |
+| Warning, your label | `#FFD75F` | `#A66B00` |
+| Error | `#FF4D5E` | `#D62839` |
+| Subagents | HUD tones of red, blue, green, yellow, purple, orange, pink and cyan | Same, darker for light backgrounds |
 
 ## Known limitations
 
@@ -100,7 +112,7 @@ As of 2026-10-10, tested with Claude Code 2.1.296:
 ./install.sh --uninstall
 ```
 
-Removes the theme, the status line and the spinner verbs, and restores your previous status line if the installer replaced one. Your `settings.json` backups are kept.
+Removes the themes, status line, spinner verbs, tips and the appearance LaunchAgent, and restores your previous status line if the installer replaced one. Your `settings.json` backups are kept.
 
 ## Credits
 
