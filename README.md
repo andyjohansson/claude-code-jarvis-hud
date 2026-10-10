@@ -89,7 +89,9 @@ Renders the status line for a few sample sessions (fresh, working, filling up, c
 
 As of 2026-10-10, tested with Claude Code 2.1.296:
 
-- **Inline code and other markdown in Claude's replies keep Claude Code's default lavender.** In Claude Code 2.1.296, markdown is colored from the built-in dark palette even when a custom theme is active, so no theme file can change it.
+- **Inline code and other markdown in Claude's replies keep Claude Code's default lavender.** Markdown is colored from the built-in dark palette even when a custom theme is active, so no theme file can change it. Reported in [anthropics/claude-code#73837](https://github.com/anthropics/claude-code/issues/73837).
+- **Diff backgrounds keep the default green and red.** The theme sets HUD teal and crimson, but Claude Code's diff view ignores custom overrides. Reported in [#85660](https://github.com/anthropics/claude-code/issues/85660).
+- **The ultracode badge stays purple.** Its color ignores custom overrides. Reported in [#70398](https://github.com/anthropics/claude-code/issues/70398).
 - **Apple Terminal shows 256 colors.** Claude Code limits Terminal.app to the 256-color palette, so some shades are rounded. Terminals with full color support, such as iTerm2 and Ghostty, show the exact colors.
 
 ## Uninstall
