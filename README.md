@@ -62,6 +62,8 @@ Your old status line is saved and comes back if you uninstall.
 
 Installs a small LaunchAgent that switches between **Jarvis HUD** (dark) and **Jarvis HUD Day** (light) when macOS changes appearance. It only switches between the two Jarvis themes, so if you pick another theme in `/theme`, it leaves your choice alone. Claude Code's built-in `auto` theme can't switch between custom themes yet ([#93034](https://github.com/anthropics/claude-code/issues/93034)), which is why this exists.
 
+Jarvis HUD Day is made for a light terminal background. Use `--auto-theme` only if your terminal also switches to a light background in light mode, as Ghostty, iTerm2 and WezTerm can. Apple Terminal keeps one profile, so with a dark profile like [Terminal Jarvis HUD](https://github.com/andyjohansson/terminal-jarvis-hud), stay on Jarvis HUD.
+
 It needs [jq](https://jqlang.org), which ships with macOS 15 and later. Otherwise run `brew install jq` or use your package manager.
 
 ## Preview
