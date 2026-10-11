@@ -1,0 +1,11 @@
+{
+  "name": "jarvis-hud",
+  "owner": { "name": "Andy Johansson" },
+  "plugins": [
+    {
+      "name": "jarvis-reactor",
+      "source": "./mod/jarvis-reactor",
+      "description": "Replaces Claude Code's working spinner with a spinning arc reactor"
+    }
+  ]
+}

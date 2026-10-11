@@ -19,6 +19,7 @@ Part of a set:
 | Status line | `statusline/statusline.sh` | Model, effort, context gauge, git branch, folder, 5-hour usage with reset countdown, and 7-day usage |
 | Spinner verbs | `spinner/verbs.json` | "Calibrating repulsors", "Building it in a cave with a box of scraps" and 70 more |
 | Spinner tips | `spinner/tips.json` | Useful Claude Code tips in J.A.R.V.I.S.'s voice, shown alongside the built-in tips |
+| Arc reactor spinner | `mod/jarvis-reactor/` | Optional. Replaces the working spinner with a two-line arc reactor, installed as a Claude Code plugin |
 | Appearance sync | `appearance/appearance-sync.sh` | Optional. Switches between Jarvis HUD and Jarvis HUD Day with macOS dark and light mode |
 | Installer | `install.sh` | Sets it all up, backs up your settings, safe to run again |
 
@@ -65,6 +66,23 @@ Installs a small LaunchAgent that switches between **Jarvis HUD** (dark) and **J
 Jarvis HUD Day is made for a light terminal background. Use `--auto-theme` only if your terminal also switches to a light background in light mode, as Ghostty, iTerm2 and WezTerm can. Apple Terminal keeps one profile, so with a dark profile like [Terminal Jarvis HUD](https://github.com/andyjohansson/terminal-jarvis-hud), stay on Jarvis HUD.
 
 It needs [jq](https://jqlang.org), which ships with macOS 15 and later. Otherwise run `brew install jq` or use your package manager.
+
+### Arc reactor spinner
+
+```
+⠔⡁⢍⢂ Calibrating repulsors…
+⠣⢑⣈⠘ (12s · esc to interrupt)
+```
+
+An optional mod that replaces Claude Code's working spinner with the arc reactor from [Obsidian Jarvis HUD](https://github.com/andyjohansson/obsidian-jarvis-hud), drawn in braille dots across two lines: an outer ring of segments sweeping clockwise and two inner arcs turning the other way. Type this at the Claude Code prompt:
+
+```
+/plugin install jarvis-reactor --marketplace andyjohansson/claude-code-jarvis-hud
+```
+
+Answer `y` to add the marketplace, then pick **user scope** so the reactor runs in every session. Remove it with `/plugin uninstall jarvis-reactor`.
+
+It uses Claude Code's mod API, which is in early access and may change between releases. In the desktop app, Claude Code keeps its own spinner. The reactor line shows elapsed time but not the token count, which mods can't read yet.
 
 ## Preview
 
